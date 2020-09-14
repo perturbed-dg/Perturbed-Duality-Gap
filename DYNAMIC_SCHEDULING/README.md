@@ -39,7 +39,7 @@ where
 - `task_mode` is one of: `train`, `test`.
 - `exp_name` can be any string you would like use to name this experiment.
 
-### Example: GAN 2D 
+### Example:  
 Train a controller on the WGAN-2D task:
 
 ```
