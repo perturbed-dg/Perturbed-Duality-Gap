@@ -20,13 +20,10 @@ pip install -r requirements.txt
 
 
 ### GANs
-Our GANs experiments use Synthetic 2D Mixture of Gaussian, [MNIST](http://yann.lecun.com/exdb/mnist/) and [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar.html) datasets.
-Set a desired path for the argument `data_dir` in config file `config/gan_2D/cfg.py`. 
+Our GANs experiments use Synthetic 2D Mixture of Gaussian, [MNIST](http://yann.lecun.com/exdb/mnist/) datasets.
+Set a desired path for the argument `data_dir` in config file `config/wgan_2D/cfg.py`. 
 The training scripts will automatically download the data at its first run.
 
-
-The CIFAR-10 data is available at [Download page of CIFAR10](http://www.cs.toronto.edu/~kriz/cifar.html).
-You need to download the python version from this page and unzip it. Set the argument 'data\_dir' in config file 'config/gan_cifar.py' to where you save the data.
 
 ## Experiments
 Use the following script to launch an experiment:
