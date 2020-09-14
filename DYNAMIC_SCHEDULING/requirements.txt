@@ -1,0 +1,8 @@
+tensorflow-gpu
+matplotlib
+imageio
+scipy
+scikit-learn
+pandas
+tensorflow_datasets
+tensorflow-gan
