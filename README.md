@@ -5,16 +5,16 @@ This repository contains the code for the experiments discussed in 'On Duality G
 ## Comparison of perturbed DG and vanilla DG for 2D RING across different optimizers
 
 ### SGD 
-![image]()
+![image](https://github.com/perturbed-dg/Perturbed-Duality-Gap/blob/master/plots/SGD_FINAL.png)
 
 
 ### RMSprop 
-![image]()
+![image](https://github.com/perturbed-dg/Perturbed-Duality-Gap/blob/master/plots/RMS_FINAL.png)
 
 
 ### ADAM 
-![image]()
+![image](https://github.com/perturbed-dg/Perturbed-Duality-Gap/blob/master/plots/ADAM_FINAL.png)
 
 
 ### NADAM 
-![image]()
+![image](https://github.com/perturbed-dg/Perturbed-Duality-Gap/blob/master/plots/NADAM_FINAL.png)
