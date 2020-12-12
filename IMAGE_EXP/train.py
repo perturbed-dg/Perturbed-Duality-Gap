@@ -13,6 +13,7 @@ from models.wgan_gp import WGAN_GP
 from pprint import pprint
 from data_generator import DataGenerator
 from sklearn.model_selection import train_test_split
+import pandas as pd
 
 os.environ["CUDA_VISIBLE_DEVICES"]="{}".format(conf.GPU)
 
@@ -41,18 +42,7 @@ def get_data_generator(data_path,batch_size,image_size):
         return  DataGenerator(train_images,image_size=image_size,batch_size=batch_size),DataGenerator(test_images,image_size=image_size,batch_size=batch_size),DataGenerator(eval_images,image_size=image_size,batch_size=batch_size)
 
 def main():
-    model_spec_name = "%s-model-spec.json" % conf.MODEL_NAME
-    model_rslt_name = "%s-results.pickle" % conf.MODEL_NAME
-
-    model_save_path = os.path.join(conf.MODEL_SAVE_DIR, conf.MODEL_NAME)
     
-    if not os.path.exists(model_save_path):
-        os.makedirs(model_save_path)
-    
-    model_ckpt_path = os.path.join(model_save_path,'Checkpoints' ,"model-ckpt")
-    model_spec_path = os.path.join(model_save_path, model_spec_name)
-    model_rslt_path = os.path.join(model_save_path, model_rslt_name)
-
     save_path = './EXP/{}/{}/{}'.format(conf.DATASET,conf.MODEL_NAME,conf.SETTING)
     
     if not os.path.exists(save_path):
@@ -102,9 +92,13 @@ def main():
         test_loader,_ = tfds.load(conf.DATASET,split="train[80%:90%]",with_info=True, shuffle_files=True,download=True,data_dir='./data')
         eval_loader,_ = tfds.load(conf.DATASET,split="train[90%:]",with_info=True, shuffle_files=True,download=True,data_dir='./data')
 
-        train_loader= train_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[32,32]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
-        test_loader = test_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[32,32]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
-        eval_loader = eval_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[32,32]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        img_dim  = 28
+        if(conf.DATASET=='celeb_a_' or conf.DATASET=='cifar10'):
+            img_dim  = 32
+
+        train_loader= train_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[img_dim,img_dim]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        test_loader = test_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[img_dim,img_dim]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        eval_loader = eval_loader.map(lambda x: {"image":(tf.image.resize(x['image'],[img_dim,img_dim]))}).repeat().shuffle(1024).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
         num_sets      = info.splits["train"].num_examples
         feature_shape = info.features["image"].shape
@@ -153,9 +147,6 @@ def main():
     if(conf.SETTING=='mode_collapse'):
         generator_opt = tf.keras.optimizers.RMSprop(learning_rate=lr_g)
         discriminator_opt = tf.keras.optimizers.RMSprop(learning_rate=lr_d)
-
-    dg_generator_opt     = tf.keras.optimizers.Adam(learning_rate=1e-5)
-    dg_discriminator_opt = tf.keras.optimizers.Adam(learning_rate=1e-5)
 
     def classic_discriminator_loss(real_output, fake_output):
         if('WGAN' in conf.MODEL_NAME):
@@ -251,7 +242,6 @@ def main():
 
         return generator_loss
 
-    ckpt = tf.train.Checkpoint(generator=model.generator, discriminator=model.discriminator)
 
     steps_per_epoch = num_sets // batch_size
     train_steps = steps_per_epoch * num_epochs
@@ -326,7 +316,7 @@ def main():
         
         M_u_v_worst =  score()
         
-        DG['vanilla'].append(M_u_v_worst - M_u_worst_v)
+        DG['vanilla'].append(abs(M_u_v_worst - M_u_worst_v))
         M1['vanilla'].append(M_u_v_worst)
         M2['vanilla'].append(M_u_worst_v)
         
@@ -367,7 +357,7 @@ def main():
         M_u_worst_v =  score()
         
         
-        DG['local_random'].append(M_u_v_worst - M_u_worst_v)
+        DG['local_random'].append(abs(M_u_v_worst - M_u_worst_v))
         M1['local_random'].append(M_u_v_worst)
         M2['local_random'].append(M_u_worst_v)
         
@@ -381,6 +371,7 @@ def main():
     x = next(train_iterator)
     x_i = feature_normalize(x["image"], feature_depth)
     z_i = np.random.normal(size=[batch_size, latent_depth]).astype(np.float32)
+    
     dg_train_disc_step(x_i, z_i)
     dg_train_gen_step(z_i)
 
@@ -423,11 +414,6 @@ def main():
             discriminator_losses_epoch.append(discriminator_loss_epoch)
 
             x_fakes.append(x_fake)
-            
-            ckpt.save(file_prefix=model_ckpt_path)
-
-            with open(model_rslt_path, "wb") as f:
-                pickle.dump((generator_losses_epoch, discriminator_losses_epoch, x_fakes), f)
         
       
         if i % log_freq == 0:
@@ -502,12 +488,18 @@ def main():
             dg_x_axis = [i for i in range(len(DG['vanilla']))]
             
             axs[0,1].set_title('M1')
+            
+            _DG_ = {}
+            _DG_['vanilla']      = pd.DataFrame(DG['vanilla']).ewm(alpha=0.1).mean()
+            _DG_['local_random'] = pd.DataFrame(DG['local_random']).ewm(alpha=0.1).mean()
+            
             axs[0,1].plot(dg_x_axis,M1['vanilla'],color='r',label='Vanilla')
             axs[0,1].plot(dg_x_axis,M1['local_random'], color='b',label='Local Random')
 
             axs[0,0].set_title('Duality Gap')
-            axs[0,0].plot(dg_x_axis,DG['vanilla'],color='r',label='Vanilla')
-            axs[0,0].plot(dg_x_axis,DG['local_random'], color='b',label='Local Random')
+            axs[0,0].plot(dg_x_axis,_DG_['vanilla'],color='r',label='Vanilla')
+            axs[0,0].plot(dg_x_axis,_DG_['local_random'], color='b',label='Ours')
+            axs[0,0].legend()
 
             norm_axis = [i*log_freq for i in range(len(D_norm))]
             var_axis = [i*log_freq for i in range(len(D_var))]

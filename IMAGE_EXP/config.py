@@ -1,28 +1,25 @@
 
 LATENT_DEPTH = 100
 
-BATCH_SIZE   = 128
-NUM_EPOCHS   = 30
+BATCH_SIZE   = 32
+NUM_EPOCHS   = 50
 
-
-MODEL_SAVE_DIR = "./Results"
-
-GPU          = 1
-MODEL_NAME   = "WGAN_GP"
-N_CRITIC     = 5
+GPU          = 0
+MODEL_NAME   = "DCGAN"
+N_CRITIC     = 1
 N_GENERATOR  = 1
-CLIP_CONST   = 2.0
-LR_D         = 5e-1
-LR_G         = 5e-5
+CLIP_CONST   = 0.05
+LR_D         = 6e-4
+LR_G         = 1e-4
 
 SETTING      = "divergence"
-DATASET      = "celeb_a"
-PERTUB_STD   = 0.75
+DATASET      = "mnist"
+PERTUB_STD   = 0.1
 
 
 DYNAMIC_NOISE     = False
 CLASSIC_REFERENCE = True
-LOG_FREQ = 300
+LOG_FREQ          = 500
 
 HYPARAMS = {
     "mnist": {
